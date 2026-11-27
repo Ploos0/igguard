@@ -1,0 +1,36 @@
+name: Build APK
+
+on:
+  push:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: 8.7
+
+      - name: Zip'i ac ve derle
+        run: |
+          unzip -q IGGuard-proje.zip
+          cd IGGuard
+          gradle assembleDebug --no-daemon
+
+      - name: APK'yi Releases'e yukle
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release delete apk -y --cleanup-tag || true
+          gh release create apk IGGuard/app/build/outputs/apk/debug/app-debug.apk --title "IG Koruyucu APK" --notes "Debug APK"
